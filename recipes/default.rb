@@ -16,3 +16,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+src_filepath = "#{Chef::Config['file_cache_path']}/#{node['jboss']['archive']}"
+
+remote_file "#{src_filepath}" do
+  source "#{node['jboss']['url']}"
+  checksum "#{node['jboss']['checksum']}"
+  owner 'root'
+  group 'root'
+  mode 00644
+end
+
+bash 'extract_jboss_archive' do
+  code "unzip -d #{node['jboss']['install_path']} #{src_filepath}"
+  not_if { ::File.exists?("#{node['jboss']['extract_path']}") }
+end
+
+bash 'create_jboss_symlink' do
+  code "ln --symbolic --force #{node['jboss']['extract_path']} #{node['jboss']['jboss_home']}"
+  not_if "test -e #{node['jboss']['jboss_home']}"
+end
+
+ruby_block  "set-env-jboss-home" do
+  block do
+    ENV["JBOSS_HOME"] = node['jboss']['jboss_home']
+  end
+  not_if { ENV["JBOSS_HOME"] == node['jboss']['jboss_home'] }
+end
+
+directory "/etc/profile.d" do
+  mode 00755
+end
+
+file "/etc/profile.d/jboss.sh" do
+  content <<-EOH
+    export JBOSS_HOME=#{node['jboss']['jboss_home']}
+    export PATH=$PATH:$JBOSS_HOME/bin
+  EOH
+  mode 00755
+end
