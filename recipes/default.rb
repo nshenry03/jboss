@@ -74,3 +74,11 @@ file "/etc/profile.d/jboss.sh" do
   EOH
   mode 00755
 end
+
+#-------------------------------------------------------------------------------
+#  Install runJBoss.sh wrapper script for run.sh
+#-------------------------------------------------------------------------------
+template "/usr/local/bin/runJBoss.sh" do
+  source 'runJBoss.sh.erb'
+  mode 00755
+end
