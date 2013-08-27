@@ -19,6 +19,9 @@
 
 src_filepath = "#{Chef::Config['file_cache_path']}/#{node['jboss']['archive']}"
 
+#-------------------------------------------------------------------------------
+#  Download JBoss
+#-------------------------------------------------------------------------------
 remote_file "#{src_filepath}" do
   source "#{node['jboss']['url']}"
   checksum "#{node['jboss']['checksum']}"
@@ -27,9 +30,22 @@ remote_file "#{src_filepath}" do
   mode 00644
 end
 
+#-------------------------------------------------------------------------------
+#  Install JBoss
+#-------------------------------------------------------------------------------
 bash 'extract_jboss_archive' do
+  user "#{node['jboss']['user']}"
+  group "#{node['jboss']['group']}"
   code "unzip -d #{node['jboss']['install_path']} #{src_filepath}"
-  not_if { ::File.exists?("#{node['jboss']['extract_path']}") }
+  creates "#{node['jboss']['extract_path']}/bin/run.sh"
+end
+
+bash 'set_jboss_group_permissions' do
+  code <<-EOH
+    chmod -R g+w #{node['jboss']['extract_path']}
+    find #{node['jboss']['extract_path']} -type d -exec chmod g+s {} \\;
+  EOH
+  not_if "#{node['jboss']['user']} == #{node['jboss']['group']} || test -g #{node['jboss']['extract_path']}"
 end
 
 bash 'create_jboss_symlink' do
@@ -37,6 +53,9 @@ bash 'create_jboss_symlink' do
   not_if "test -e #{node['jboss']['jboss_home']}"
 end
 
+#-------------------------------------------------------------------------------
+#  Setup JBOSS_HOME and PATH
+#-------------------------------------------------------------------------------
 ruby_block  "set-env-jboss-home" do
   block do
     ENV["JBOSS_HOME"] = node['jboss']['jboss_home']

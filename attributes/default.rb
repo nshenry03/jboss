@@ -18,8 +18,11 @@
 #
 
 # default attributes for all platforms
-default['jboss']['install_path'] = "/usr/local"
-default['jboss']['jboss_home'] = "/opt/jboss"
+default['jboss']['install_path'] = '/usr/local'
+default['jboss']['jboss_home'] = '/opt/jboss'
+
+default['jboss']['user'] = 'root'
+default['jboss']['group'] = 'root'
 
 default['jboss']['version'] = '5.1.0.GA'
 default['jboss']['archive'] = "jboss-#{node['jboss']['version']}-jdk6.zip"
